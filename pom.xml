@@ -67,7 +67,7 @@
 					</descriptorRefs>
 					<archive>
 						<manifest>
-							<mainClass>com.gundam.emailsample</mainClass>
+							<mainClass>com.gundam.EmailSample</mainClass>
 						</manifest>
 					</archive>
 				</configuration>
