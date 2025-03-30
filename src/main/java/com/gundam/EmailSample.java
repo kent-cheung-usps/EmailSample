@@ -42,6 +42,7 @@ public class EmailSample {
             properties.put("mail." + protocol + ".host", host);
             properties.put("mail." + protocol + ".port", protocol.equals("pop3") ? "995" : "993");
             properties.put("mail." + protocol + ".ssl.enable", "true");
+            properties.put("mail.debug", "false"); // Enable debugging
 
             Session session = Session.getInstance(properties);
             Store store = session.getStore(protocol);
@@ -58,6 +59,10 @@ public class EmailSample {
             if (messages.length > 0) {
                 Message latestMessage = messages[messages.length - 1];
                 System.out.println("Latest Email Subject: " + latestMessage.getSubject());
+                System.out.println("From: " + latestMessage.getFrom()[0]);
+                System.out.println("Date: " + latestMessage.getSentDate());
+                System.out.println("Content: " + latestMessage.getContent().toString());
+
             } else {
                 System.out.println("No emails found.");
             }
