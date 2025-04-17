@@ -1,5 +1,5 @@
 # EmailSample
-POP3 and IMAP sample
+POP3 and IMAP sample. Read the latest email in the inbox.
 ## Requirement
 - Open JDK version 22
 - Maven
