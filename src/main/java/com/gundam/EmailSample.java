@@ -6,6 +6,7 @@ import jakarta.mail.Folder;
 import jakarta.mail.Message;
 import jakarta.mail.Session;
 import jakarta.mail.Store;
+import jakarta.mail.internet.MimeMultipart;
 
 /**
  * Hello world!
@@ -61,7 +62,8 @@ public class EmailSample {
                 System.out.println("Latest Email Subject: " + latestMessage.getSubject());
                 System.out.println("From: " + latestMessage.getFrom()[0]);
                 System.out.println("Date: " + latestMessage.getSentDate());
-                System.out.println("Content: " + latestMessage.getContent().toString());
+//                System.out.println("Content: " + latestMessage.getContent().toString());                
+                System.out.println("Content: " + getTextFromMessage(latestMessage));
 
             } else {
                 System.out.println("No emails found.");
@@ -72,5 +74,31 @@ public class EmailSample {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+    
+    private static String getTextFromMessage(Message message) throws Exception {
+        if (message.isMimeType("text/plain")) {
+            return message.getContent().toString();
+        } else if (message.isMimeType("multipart/*")) {
+            MimeMultipart mimeMultipart = (MimeMultipart) message.getContent();
+            return getTextFromMimeMultipart(mimeMultipart);
+        }
+        return "Unsupported content type";
+    }
+
+    private static String getTextFromMimeMultipart(MimeMultipart mimeMultipart) throws Exception {
+        StringBuilder result = new StringBuilder();
+        int count = mimeMultipart.getCount();
+        for (int i = 0; i < count; i++) {
+            var bodyPart = mimeMultipart.getBodyPart(i);
+            if (bodyPart.isMimeType("text/plain")) {
+                result.append(bodyPart.getContent().toString());
+            } else if (bodyPart.isMimeType("text/html")) {
+                String html = bodyPart.getContent().toString();
+                // You can use a library like jsoup to parse HTML if needed
+                result.append(html);
+            }
+        }
+        return result.toString();
     }
 }
