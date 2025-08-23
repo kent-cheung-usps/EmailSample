@@ -1,6 +1,9 @@
 package com.gundam;
 
+import java.io.InputStream;
 import java.util.Properties;
+
+import com.gundam.util.FieldEncryptor;
 
 import jakarta.mail.Folder;
 import jakarta.mail.Message;
@@ -9,16 +12,43 @@ import jakarta.mail.Store;
 import jakarta.mail.internet.MimeMultipart;
 
 /**
- * Hello world!
+ * Example email retriever with encrypted password support.
  */
 public class EmailSample {
-    private static final String EMAIL = "amiga.maria@gmx.com";
-    private static final String PASSWORD = "DummyDummyCh@rger";
-    private static final String POP3_SERVER = "pop.gmx.com";
-    private static final String IMAP_SERVER = "imap.gmx.com";
+    private static String EMAIL;
+    private static String PASSWORD;
+    private static String POP3_SERVER;
+    private static String IMAP_SERVER;
+
+    static {
+        try (InputStream input = EmailSample.class.getClassLoader()
+                .getResourceAsStream("application.properties")) {
+            Properties prop = new Properties();
+            if (input == null) {
+                System.out.println("Sorry, unable to find application.properties");
+            } else {
+                prop.load(input);
+                EMAIL = prop.getProperty("email");
+                String passwordRaw = prop.getProperty("password");
+                if (passwordRaw != null && passwordRaw.startsWith("{enc}")) {
+                    try {
+                        PASSWORD = FieldEncryptor.decrypt(passwordRaw.substring(5));
+                    } catch (Exception e) {
+                        throw new RuntimeException("Failed to decrypt password", e);
+                    }
+                } else {
+                    PASSWORD = passwordRaw;
+                }
+                POP3_SERVER = prop.getProperty("pop3.server");
+                IMAP_SERVER = prop.getProperty("imap.server");
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
 
     public static void main(String[] args) {
-    	System.out.println("Hello World");
+        System.out.println("Hello World");
         if (args.length != 1) {
             System.out.println("Usage: java EmailRetriever <POP/IMAP>");
             return;
@@ -37,7 +67,7 @@ public class EmailSample {
 
     private static void retrieveLatestEmail(String protocol, String host) {
         try {
-        	System.out.println("Selected Host Protocol: " + host + ":" + protocol);
+            System.out.println("Selected Host Protocol: " + host + ":" + protocol);
             Properties properties = new Properties();
             properties.put("mail.store.protocol", protocol);
             properties.put("mail." + protocol + ".host", host);
@@ -47,7 +77,7 @@ public class EmailSample {
 
             Session session = Session.getInstance(properties);
             Store store = session.getStore(protocol);
-            
+
             System.out.println("Connecting ...");
             store.connect(host, EMAIL, PASSWORD);
 
@@ -56,15 +86,13 @@ public class EmailSample {
 
             Message[] messages = inbox.getMessages();
             System.out.println("Total messages: " + messages.length);
-            
+
             if (messages.length > 0) {
                 Message latestMessage = messages[messages.length - 1];
                 System.out.println("Latest Email Subject: " + latestMessage.getSubject());
                 System.out.println("From: " + latestMessage.getFrom()[0]);
                 System.out.println("Date: " + latestMessage.getSentDate());
-//                System.out.println("Content: " + latestMessage.getContent().toString());                
                 System.out.println("Content: " + getTextFromMessage(latestMessage));
-
             } else {
                 System.out.println("No emails found.");
             }
@@ -75,7 +103,7 @@ public class EmailSample {
             e.printStackTrace();
         }
     }
-    
+
     private static String getTextFromMessage(Message message) throws Exception {
         if (message.isMimeType("text/plain")) {
             return message.getContent().toString();
